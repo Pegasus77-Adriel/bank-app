@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bradesco</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1><span style="color: red;">BRADESCO</span></h1>
+        <div class="form-container">
+            <h2>Crie sua conta</h2>
+            <div class="form-group">
+                <label for="tipoConta">Tipo de Conta:</label>
+                <select id="tipoConta" onchange="toggleCpfConjunto()">
+                    <option value="individual">Individual</option>
+                    <option value="conjunta">Conjunta</option>
+                </select>
+            </div>
+            <form id="signup-form">
+                <input type="text" id="name" placeholder="Nome" required>
+                <input type="text" id="cpf" class="cpf" placeholder="CPF" required maxlength="14">
+                <div class="form-group" id="cpfConjunto1" style="display:none;">
+                    <input type="text" id="cpf2" class="cpf" placeholder="CPF 2" >
+                </div>
+                <input type="password" id="password" placeholder="Senha" required>
+                <button type="submit">Criar Conta</button>
+            </form>
+        </div>
+        <div class="form-container">
+            <h2>Acesse sua conta</h2>
+            <div class="form-group">
+                <label for="tipoContaLogin">Tipo de Conta:</label>
+                <select id="tipoContaLogin" onchange="toggleCpfConjuntoLogin()">
+                    <option value="individual">Individual</option>
+                    <option value="conjunta">Conjunta</option>
+                </select>
+            </div>
+            <form id="login-form">
+                <input type="text" id="login-cpf" class="cpf" placeholder="CPF" required>
+                <div class="form-group" id="cpfConjuntoLogin" style="display:none;">
+                    <input type="text" id="login-cpf2" class="cpf" placeholder="CPF 2">
+                </div>
+                <input type="password" id="login-password" placeholder="Senha" required>
+                <button type="submit">Acessar Conta</button>
+            </form>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

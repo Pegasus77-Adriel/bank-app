@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sua Conta</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="card">
+            <div class="card-header">
+                <h1>Bem-vindo à sua conta bancária, {{ user.name }}</h1>
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">Seu saldo é: R$ {{ user.saldo }}</h5>
+                <p class="card-text">Opções disponíveis:</p>
+                
+                <h2>Selecione uma conta para operação:</h2>
+                <div class="form-group">
+                    <select id="account-select" class="form-control">
+                        {% for account in accounts %}
+                            <option value="{{ account.id }}" data-nome="{{ account.nome }}" data-cpf="{{ account.cpf }}" data-tipo="{{ account.tipo }}" data-saldo="{{ account.saldo }}">
+                                {{ account.nome }} - CPF: {{ account.cpf }} - Tipo: {{ account.tipo }} - Banco: {{account.conta}} - Saldo: R$ {{ account.saldo }}
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div id="operation-forms">
+                    <h2>Sacar</h2>
+                    <form id="sacar" class="mb-4">
+                        <div class="form-group">
+                            <input type="number" id="saque" class="form-control" name="amount" placeholder="Valor" min="0.01" step="0.01" required>
+                        </div>
+                        <input type="hidden" name="account_id" id="withdraw-account-id">
+                        <button type="submit" class="btn btn-primary">Sacar</button>
+                    </form>
+
+                    <h2>Depositar</h2>
+                    <form id="depositar" class="mb-4">
+                        <div class="form-group">
+                            <input type="number" id="deposito" class="form-control" name="amount" placeholder="Valor" min="0.01" step="0.01" required>
+                        </div>
+                        <input type="hidden" name="account_id" id="deposit-account-id">
+                        <button type="submit" class="btn btn-success">Depositar</button>
+                    </form>
+
+                    <h2>Transferir</h2>
+                    <form id="transferir" class="mb-4">
+                        <div class="form-group">
+                            <input type="number" class="form-control" name="amount" placeholder="Valor" min="0.01" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="text" class="form-control" name="target_cpf" placeholder="CPF do destinatário" required>
+                        </div>
+                        <input type="hidden" name="account_id" id="transfer-account-id">
+                        <button type="submit" class="btn btn-warning">Transferir</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script >
+
+
+        document.getElementById('sacar').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const selectedOption = document.getElementById('account-select').selectedOptions[0];
+            const id = selectedOption.value;
+            const nome = selectedOption.getAttribute('data-nome');
+            const cpf = selectedOption.getAttribute('data-cpf');
+            const tipo = selectedOption.getAttribute('data-tipo');
+            const saldo = selectedOption.getAttribute('data-saldo');
+        
+            const valor = document.getElementById('saque').value;
+            console.log(valor);
+            try {
+                const response = await fetch(`/account/sacar/${cpf}/${tipo}/${valor}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({cpf, tipo, valor})
+                });
+                const result = await response.json();
+                alert(result.message);
+        
+            } catch (error) {
+                //console.error('Erro ao enviar formulário:', error);
+                alert('Ocorreu um erro ao enviar a solicitação. Por favor, tente novamente.');
+            }
+        });
+
+
+        document.getElementById('depositar').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const selectedOption = document.getElementById('account-select').selectedOptions[0];
+            const id = selectedOption.value;
+            const nome = selectedOption.getAttribute('data-nome');
+            const cpf = selectedOption.getAttribute('data-cpf');
+            const tipo = selectedOption.getAttribute('data-tipo');
+            const saldo = selectedOption.getAttribute('data-saldo');
+        
+            const valor = document.getElementById('deposito').value;
+            console.log(valor);
+            try {
+                const response = await fetch(`/account/depositar/${cpf}/${tipo}/${valor}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({cpf, tipo, valor})
+                });
+                const result = await response.json();
+                alert(result.message);
+        
+            } catch (error) {
+                //console.error('Erro ao enviar formulário:', error);
+                alert('Ocorreu um erro ao enviar a solicitação. Por favor, tente novamente.');
+            }
+        });
+    </script>
+</body>
+</html>
