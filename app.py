@@ -4,9 +4,12 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import requests
 import socket
 from threading import Lock
+import os
 
 app = Flask(__name__)
-HOST = socket.gethostbyname(socket.gethostname())
+BRADESCO = socket.gethostbyname(socket.gethostname())
+NUBANK = os.getenv('SERVER-IP1')
+PICPAY = os.getenv('SERVER-IP2')
 DB_PATH = 'data/bank.db'
 
 # Configurando o banco de dados
@@ -78,17 +81,38 @@ def account(cpf):
         user_data = {'name': user[0], 'saldo': user[1]}
         
         # Faz uma requisição interna para a rota /account/contas/<cpf>
-        accounts_response = requests.get(f'http://{HOST}:59998/account/contas/{cpf}')
+        accounts_response_1 = requests.get(f'http://{BRADESCO}:59998/account/contas/{cpf}')
+        try:
+            accounts_response_2 = requests.get(f'http://{NUBANK}:59998/account/contas/{cpf}')
+        except:
+            pass
+        try:
+            accounts_response_3 = requests.get(f'http://{PICPAY}:59998/account/contas/{cpf}')
+        except:
+            pass
         
-        if accounts_response.status_code == 200:
-            accounts_data = accounts_response.json()
+        if accounts_response_1.status_code == 200:
+            accounts_data_1 = accounts_response_1.json()
         else:
-            accounts_data = []
+            accounts_data_1 = []
 
+        if accounts_response_2.status_code == 200:
+            accounts_data_2 = accounts_response_2.json()
+        else:
+            accounts_data_2 = []
+
+        if accounts_response_3.status_code == 200:
+            accounts_data_3 = accounts_response_3.json()
+        else:
+            accounts_data_3 = []
+
+        # Concatenando as listas
+        accounts_data = accounts_data_1 + accounts_data_2 + accounts_data_3
+        
         return render_template('account.html', user=user_data, accounts=accounts_data)
     else:
         return redirect(url_for('index'))  # Redireciona para a página inicial se o usuário não for encontrado
-
+    
 @app.route('/account/contas/<cpf>')
 def account_contas(cpf):
     conn = sqlite3.connect(DB_PATH)
@@ -109,7 +133,7 @@ def account_contas(cpf):
             "tipo": account[4],  # Assuming the fifth column is 'saldo'
             "conta": account[6],
         }
-        print(account_dict)
+    
         accounts_list.append(account_dict)
     
     conn.close()
@@ -120,8 +144,8 @@ def account_contas(cpf):
 # Adiciona um bloqueio (lock) para operações críticas
 lock = Lock()
 
-@app.route('/account/sacar/<cpf>/<tipo>/<valor>', methods=['POST'])
-def account_sacar(cpf, tipo, valor):
+@app.route('/account/sacar/<cpf>/<valor>', methods=['POST'])
+def account_sacar(cpf, valor):
     with lock:
         try:
             # Converte o valor para um número
@@ -139,7 +163,7 @@ def account_sacar(cpf, tipo, valor):
             user = c.fetchone()
 
             if not user:
-                print("usuário não encontrado")
+            
                 conn.execute('ROLLBACK')
                 conn.close()
                 return jsonify({'error': 'Usuário não encontrado'}), 404
@@ -166,8 +190,8 @@ def account_sacar(cpf, tipo, valor):
         conn.close()
         return jsonify({'message': 'Saque realizado com sucesso', 'novo_saldo': novo_saldo})
 
-@app.route('/account/depositar/<cpf>/<tipo>/<valor>', methods=['POST'])
-def account_depositar(cpf, tipo, valor):
+@app.route('/account/depositar/<cpf>/<valor>', methods=['POST'])
+def account_depositar(cpf, valor):
     with lock:
         try:
             # Converte o valor para um número
@@ -204,6 +228,26 @@ def account_depositar(cpf, tipo, valor):
 
         conn.close()
         return jsonify({'message': 'Depósito realizado com sucesso', 'novo_saldo': novo_saldo})
+    
+
+@app.route('/account/transferir/<cpf1>/<cpf2>/<valor1>/<valor2>/<banco1>/<banco2>', methods=['POST'])
+def account_transferir(cpf1, cpf2, valor1, valor2, banco1, banco2):
+    
+    try:
+        response_1 = requests.get(f'http://{banco1}:59998/account/depositar/{cpf1}/{cpf2}/{valor1}')
+    except:
+        pass
+    try:
+        response_2 = requests.get(f'http://{banco2}:59998/account/depositar/{cpf1}/{cpf2}/{valor2}')
+    except:
+        pass
+    try:
+        # Aqui você pode adicionar a lógica de transferência bancária
+        return jsonify({'message': 'Depósito realizado com sucesso'})
+    except Exception as e:
+        print(f"Erro: {e}")
+        return jsonify({'message': 'Erro ao realizar depósito'}), 500
+
 
 if __name__ == '__main__':
-    app.run(HOST, port=59998, debug=True)
+    app.run(BRADESCO, port=59998, debug=True)
